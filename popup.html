@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ChatGPT Exporter</title>
+    <style>
+      body {
+        width: 300px;
+        padding: 16px;
+        font-family: "Inter", sans-serif;
+        background: #f8fafc;
+        color: #1e293b;
+      }
+      h2 {
+        font-size: 1.1rem;
+        margin-top: 0;
+        color: #111827;
+      }
+      .status {
+        font-size: 0.85rem;
+        margin-bottom: 16px;
+        color: #64748b;
+      }
+      .btn {
+        width: 100%;
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background 0.2s;
+      }
+      .btn:hover {
+        background: #1d4ed8;
+      }
+      .btn:disabled {
+        background: #94a3b8;
+        cursor: not-allowed;
+      }
+      .footer {
+        margin-top: 16px;
+        font-size: 0.75rem;
+        text-align: center;
+        color: #9ca3af;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>ChatGPT Exporter</h2>
+    <div id="status" class="status">
+      No conversation detected yet. Please refresh ChatGPT or open a chat.
+    </div>
+
+    <div
+      class="options"
+      style="
+        margin-bottom: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      "
+    >
+      <span style="font-size: 0.85rem; font-weight: 500">Theme:</span>
+      <select
+        id="themeSelect"
+        style="padding: 4px; border-radius: 4px; border: 1px solid #cbd5e1"
+      >
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </div>
+
+    <div class="options" style="margin-bottom: 12px">
+      <label
+        for="filenameInput"
+        style="
+          font-size: 0.85rem;
+          font-weight: 500;
+          display: block;
+          margin-bottom: 4px;
+        "
+        >Filename:</label
+      >
+      <input
+        type="text"
+        id="filenameInput"
+        placeholder="chatgpt-export"
+        style="
+          width: 100%;
+          padding: 6px;
+          border-radius: 4px;
+          border: 1px solid #cbd5e1;
+          box-sizing: border-box;
+        "
+      />
+      <div style="font-size: 0.7rem; color: #64748b; margin-top: 2px">
+        Leave empty to use chat title
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <button id="exportBtn" class="btn" disabled>Export as HTML</button>
+      <button id="pdfBtn" class="btn" style="background: #ef4444" disabled>
+        Export as PDF
+      </button>
+      <button id="exportMdBtn" class="btn" style="background: #10b981; margin-top: 8px;" disabled>
+        Export as Markdown
+      </button>
+    </div>
+
+    <div class="footer">
+      Open a ChatGPT conversation to capture it.
+      <br /><br />
+      <button
+        id="debugBtn"
+        style="
+          background: none;
+          border: none;
+          color: #9ca3af;
+          text-decoration: underline;
+          cursor: pointer;
+          font-size: 0.7rem;
+        "
+      >
+        Log Debug Data
+      </button>
+      <br />
+      <button
+        id="clearCacheBtn"
+        style="
+          background: none;
+          border: none;
+          color: #ef4444;
+          text-decoration: underline;
+          cursor: pointer;
+          font-size: 0.7rem;
+          margin-top: 5px;
+        "
+      >
+        Clear Extension Cache
+      </button>
+    </div>
+    <script src="html2pdf.bundle.min.js"></script>
+    <script src="image_fetcher.js"></script>
+
+    <script src="parser.js"></script>
+    <script src="html_exporter.js"></script>
+    <script src="markdown_exporter.js"></script>
+    <script src="pdf_exporter.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>
+
