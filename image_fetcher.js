@@ -114,12 +114,13 @@ class ImageFetcher {
     const fileIds = new Set();
     if (!conversationData || !conversationData.mapping) return fileIds;
 
-    for (const nodeId in conversationData.mapping) {
-      const node = conversationData.mapping[nodeId];
+    const mapping = conversationData.mapping;
+    for (const nodeId in mapping) {
+      const node = mapping[nodeId];
       const message = node.message;
       if (!message) continue;
 
-      // Check content parts
+      // 1. Check content parts
       if (message.content && message.content.parts) {
         message.content.parts.forEach((part) => {
           if (typeof part === "string") {
@@ -127,23 +128,40 @@ class ImageFetcher {
             for (const match of matches) {
               fileIds.add(match[0]);
             }
+          } else if (typeof part === "object") {
+            const partType = part.type || part.content_type;
+            if (partType === "image_asset_pointer") {
+              const assetId = (part.asset_pointer || "").replace("sediment://", "");
+              if (assetId) fileIds.add(assetId);
+            } else if (partType === "multimodal_text") {
+              (part.content || []).forEach((subPart) => {
+                if (typeof subPart === "object" && subPart.type === "image_asset_pointer") {
+                  const assetId = (subPart.asset_pointer || "").replace("sediment://", "");
+                  if (assetId) fileIds.add(assetId);
+                }
+              });
+            }
           }
         });
       }
 
-      // Check metadata attachments
-      const attachments =
-        (message.metadata && message.metadata.attachments) || [];
+      // 2. Metadata attachments
+      const attachments = (message.metadata && message.metadata.attachments) || [];
       attachments.forEach((att) => {
         if (att.id) fileIds.add(att.id);
       });
 
-      // Check content_references
-      const contentRefs =
-        (message.metadata && message.metadata.content_references) || [];
+      // 3. Content references
+      const contentRefs = (message.metadata && message.metadata.content_references) || [];
       contentRefs.forEach((ref) => {
         if (ref.type === "image" && ref.file_id) {
           fileIds.add(ref.file_id);
+        } else if (ref.type === "image_group" && ref.images) {
+          ref.images.forEach((img) => {
+            if (img.image_result && img.image_result.file_id) {
+              fileIds.add(img.image_result.file_id);
+            }
+          });
         }
       });
     }
@@ -204,71 +222,19 @@ class ImageFetcher {
 
   async getAllImages(data, statusCallback) {
     const imageMap = {};
-    const fileIds = new Set();
     const conversationId = data.id;
 
-    // Scan mapping for file IDs (reuse logic from popup.js but cleaner)
-    // Actually the logic in popup.js was slightly more comprehensive in `getAllImages` 
-    // than `extractAllFileIds` (it handled image_asset_pointer etc).
-    // I should merge them or capture all cases.
-    
-    // I will use a robust extraction logic here based on the original getAllImages
-    const mapping = data.mapping || {};
-    for (const nodeId in mapping) {
-        const node = mapping[nodeId];
-        const message = node.message;
-        if (!message) continue;
-  
-        // 1. Check content parts
-        if (message.content && message.content.parts) {
-          message.content.parts.forEach((part) => {
-            if (typeof part === "object") {
-              const partType = part.type || part.content_type;
-              if (partType === "image_asset_pointer") {
-                const assetId = (part.asset_pointer || "").replace("sediment://", "");
-                if (assetId) fileIds.add(assetId);
-              } else if (partType === "multimodal_text") {
-                (part.content || []).forEach((subPart) => {
-                  if (typeof subPart === "object" && subPart.type === "image_asset_pointer") {
-                    const assetId = (subPart.asset_pointer || "").replace("sediment://", "");
-                    if (assetId) fileIds.add(assetId);
-                  }
-                });
-              }
-            }
-          });
-        }
-  
-        // 2. Metadata attachments (already covered but good to keep)
-        const attachments = (message.metadata && message.metadata.attachments) || [];
-        attachments.forEach((att) => {
-          if (att.id) fileIds.add(att.id);
-        });
-  
-        // 3. Content references
-        const contentRefs = (message.metadata && message.metadata.content_references) || [];
-        contentRefs.forEach((ref) => {
-          if (ref.type === "image" && ref.file_id) {
-            fileIds.add(ref.file_id);
-          } else if (ref.type === "image_group" && ref.images) {
-            ref.images.forEach((img) => {
-              if (img.image_result && img.image_result.file_id) {
-                fileIds.add(img.image_result.file_id);
-              }
-            });
-          }
-        });
-      }
+    const fileIds = this.extractAllFileIds(data);
 
     if (fileIds.size > 0 && statusCallback) {
-        statusCallback(fileIds.size);
+      statusCallback(fileIds.size);
     }
 
     const promises = Array.from(fileIds).map(async (id) => {
       const base64 = await this.fetchImageAsBase64(id, conversationId);
       if (base64) imageMap[id] = base64;
     });
-    
+
     await Promise.all(promises);
     return imageMap;
   }

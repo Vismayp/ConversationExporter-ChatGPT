@@ -140,17 +140,6 @@ document.addEventListener("DOMContentLoaded", () => {
           setStatus(`<strong>Success!</strong><br><small>Exported as Markdown</small>`);
         }
   
-        /* 
-        // We no longer clear cache automatically to keep subsequent exports fast
-        chrome.storage.local.remove(
-            ["image_cache", "file_url_map", "download_url_map"],
-            () => {
-              console.log("Cache cleared after export.");
-            }
-          );
-        */
-
-  
       } catch (err) {
         console.error(err);
         setStatus(`<strong>Error:</strong> ${err.message}`, true);

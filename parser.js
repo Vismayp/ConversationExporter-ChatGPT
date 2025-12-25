@@ -238,17 +238,23 @@ class ChatGPTParser {
       .map((p) => {
         p = p.trim();
         if (!p) return "";
+
+        // Handle standalone code blocks
         if (p.startsWith("<!--CODE_BLOCK_")) {
           const index = parseInt(p.match(/\d+/)[0]);
           return codeBlocks[index];
         }
+
+        // Replace any remaining placeholders
+        codeBlocks.forEach((html, i) => {
+          p = p.replace(`<!--CODE_BLOCK_${i}-->`, html);
+        });
+
+        // If it's a block element, return as is; otherwise wrap in <p>
         if (/<(h1|h2|h3|div|table|ul|ol|blockquote|hr|pre)/.test(p)) {
-          codeBlocks.forEach((html, i) => { p = p.replace(`<!--CODE_BLOCK_${i}-->`, html); });
           return p;
         } else {
-          p = p.replace(/\n/g, "<br>");
-          codeBlocks.forEach((html, i) => { p = p.replace(`<!--CODE_BLOCK_${i}-->`, html); });
-          return `<p>${p}</p>`;
+          return `<p>${p.replace(/\n/g, "<br>")}</p>`;
         }
       })
       .filter(Boolean);

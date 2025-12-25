@@ -413,13 +413,6 @@ class HTMLExporter {
           msg.content,
           msg.content_references
         );
-        
-        // Ultra-aggressive clean: Replace all bullet variations with safe ASCII "*"
-        contentHtml = contentHtml
-            .replace(/\u00E2\u20AC\u00A2/g, "*") // â€¢
-            .replace(/\u00E2\u0080\u00A2/g, "*")
-            .replace(/â€¢/g, "*")
-            .replace(/•/g, "*");
 
 
 
